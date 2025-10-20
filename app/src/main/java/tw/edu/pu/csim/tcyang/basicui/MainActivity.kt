@@ -11,6 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -66,16 +67,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Main(modifier: Modifier = Modifier) {
-    // 取得當前的 Context
     val context = LocalContext.current
-
-    // 使用 remember 將 MediaPlayer 實例保留在 Composable 中
     var mper by remember { mutableStateOf<MediaPlayer?>(null) }
-
-    // 用來顯示當前播放狀態的文字
     var nowPlaying by remember { mutableStateOf("點擊按鈕播放音樂") }
 
-    // 動物圖片和名稱列表
     val animals = listOf(
         R.drawable.animal0, R.drawable.animal1, R.drawable.animal2, R.drawable.animal3,
         R.drawable.animal4, R.drawable.animal5, R.drawable.animal6, R.drawable.animal7,
@@ -88,19 +83,21 @@ fun Main(modifier: Modifier = Modifier) {
 
     var flag by remember { mutableStateOf("test") }
 
-    // 當 Composable 離開畫面時，釋放 MediaPlayer 資源
+    // *** 新增功能 1: 建立一個布林狀態來決定顯示哪張圖 ***
+    var showFox by remember { mutableStateOf(true) }
+
+
     DisposableEffect(Unit) {
         onDispose {
             mper?.release()
         }
     }
 
-    // 加上 verticalScroll 讓整個畫面可以滾動
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(Color(0xFFE0BBE4))
-            .verticalScroll(rememberScrollState()), // 加上這行
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -159,9 +156,7 @@ fun Main(modifier: Modifier = Modifier) {
         }
 
         Spacer(modifier = Modifier.size(10.dp))
-
         Text(text = nowPlaying)
-
         Spacer(modifier = Modifier.size(10.dp))
 
         Button(
@@ -173,14 +168,33 @@ fun Main(modifier: Modifier = Modifier) {
         }
         Text(flag)
 
-        Spacer(modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.size(15.dp))
+
+        // *** 新增功能 2: 根據狀態決定圖片資源 ***
+        val imageResource = if (showFox) R.drawable.animal8 else R.drawable.animal9
+
+        // *** 新增功能 3: 建立可點擊的圖片，點擊時切換狀態 ***
+        Image(
+            painter = painterResource(id = imageResource),
+            contentDescription = "可切換的動物圖片",
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .clickable {
+                    showFox = !showFox // 切換布林值 (true -> false, false -> true)
+                }
+        )
+
+        Spacer(modifier = Modifier.size(15.dp))
 
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 播放 tcyang
+            // ... (底下三個按鈕的程式碼維持不變)
             Button(
                 onClick = {
                     try {
@@ -188,7 +202,6 @@ fun Main(modifier: Modifier = Modifier) {
                         mper = MediaPlayer.create(context, R.raw.tcyang)
                         mper?.start()
                         nowPlaying = "🎵 正在播放：tcyang"
-                        Toast.makeText(context, "播放：tcyang", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         nowPlaying = "❌ 播放失敗：tcyang"
                     }
@@ -206,7 +219,6 @@ fun Main(modifier: Modifier = Modifier) {
                 }
             }
 
-            // 播放 fly
             Button(
                 onClick = {
                     try {
@@ -214,7 +226,6 @@ fun Main(modifier: Modifier = Modifier) {
                         mper = MediaPlayer.create(context, R.raw.fly)
                         mper?.start()
                         nowPlaying = "🎵 正在播放：fly"
-                        Toast.makeText(context, "播放：fly", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         nowPlaying = "❌ 播放失敗：fly"
                     }
@@ -231,7 +242,6 @@ fun Main(modifier: Modifier = Modifier) {
                 }
             }
 
-            // 結束 App
             Button(
                 onClick = {
                     (context as? Activity)?.finish()
