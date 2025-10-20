@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BasicUITheme {
+                // *** 修正 1: 恢復成不含 bottomBar 的簡單 Scaffold ***
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Main(
                         modifier = Modifier.padding(innerPadding)
@@ -83,9 +84,8 @@ fun Main(modifier: Modifier = Modifier) {
 
     var flag by remember { mutableStateOf("test") }
 
-    // *** 新增功能 1: 建立一個布林狀態來決定顯示哪張圖 ***
+    // 將狀態變數移回 Main 函式
     var showFox by remember { mutableStateOf(true) }
-
 
     DisposableEffect(Unit) {
         onDispose {
@@ -106,74 +106,65 @@ fun Main(modifier: Modifier = Modifier) {
             color = Color.Blue,
             fontFamily = FontFamily(Font(R.font.kai))
         )
-
         Spacer(modifier = Modifier.size(10.dp))
-
         Text(
             text = stringResource(R.string.app_author),
             fontSize = 20.sp,
             color = Color(0xFF654321)
         )
-
         Spacer(modifier = Modifier.size(10.dp))
-
         Row {
-            Image(
-                painter = painterResource(id = R.drawable.android),
-                contentDescription = "Android 圖示",
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(Color.Yellow),
-                alpha = 0.6f,
-            )
-            Image(
-                painter = painterResource(id = R.drawable.compose),
-                contentDescription = "Compose icon",
-                modifier = Modifier.size(100.dp)
-            )
-            Image(
-                painter = painterResource(id = R.drawable.firebase),
-                contentDescription = "Firebase icon",
-                modifier = Modifier.size(100.dp)
-            )
+            Image(painter = painterResource(id = R.drawable.android), contentDescription = "Android 圖示", modifier = Modifier.size(100.dp).clip(CircleShape).background(Color.Yellow), alpha = 0.6f)
+            Image(painter = painterResource(id = R.drawable.compose), contentDescription = "Compose icon", modifier = Modifier.size(100.dp))
+            Image(painter = painterResource(id = R.drawable.firebase), contentDescription = "Firebase icon", modifier = Modifier.size(100.dp))
         }
-
         Spacer(modifier = Modifier.size(10.dp))
-
         LazyRow {
             items(51) { index ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = "$index: ")
                     Text(text = animalsName[index % 10])
-                    Image(
-                        painter = painterResource(id = animals[index % 10]),
-                        contentDescription = "可愛動物",
-                        modifier = Modifier.size(60.dp)
-                    )
+                    Image(painter = painterResource(id = animals[index % 10]), contentDescription = "可愛動物", modifier = Modifier.size(60.dp))
                 }
             }
         }
-
         Spacer(modifier = Modifier.size(10.dp))
         Text(text = nowPlaying)
         Spacer(modifier = Modifier.size(10.dp))
-
-        Button(
-            onClick = {
-                flag = if (flag == "test") "A" else "test"
-            }
-        ) {
+        Button(onClick = { flag = if (flag == "test") "A" else "test" }) {
             Text("歡迎修課")
         }
         Text(flag)
+        Spacer(modifier = Modifier.size(20.dp))
 
-        Spacer(modifier = Modifier.size(15.dp))
+        // 三個主要功能按鈕的 Row
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(onClick = { /* ... */ }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color.Green)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = "歡迎", color = Color.Blue); Text(text = "修課", color = Color.Red)
+                    Image(painter = painterResource(id = R.drawable.teacher), contentDescription = "teacher icon")
+                }
+            }
+            Button(onClick = { /* ... */ }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = "展翅飛翔", color = Color.White)
+                    Image(painter = painterResource(id = R.drawable.fly), contentDescription = "fly icon")
+                }
+            }
+            Button(onClick = { (context as? Activity)?.finish() }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BFFF)), shape = CutCornerShape(10), border = BorderStroke(1.dp, Color.Blue), elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp)) {
+                Text(text = "結束App")
+            }
+        }
 
-        // *** 新增功能 2: 根據狀態決定圖片資源 ***
+        // *** 修正 2: 將圖片切換功能程式碼移動到這裡 ***
+        Spacer(modifier = Modifier.size(20.dp))
+
         val imageResource = if (showFox) R.drawable.animal8 else R.drawable.animal9
 
-        // *** 新增功能 3: 建立可點擊的圖片，點擊時切換狀態 ***
         Image(
             painter = painterResource(id = imageResource),
             contentDescription = "可切換的動物圖片",
@@ -181,80 +172,10 @@ fun Main(modifier: Modifier = Modifier) {
                 .size(120.dp)
                 .clip(CircleShape)
                 .clickable {
-                    showFox = !showFox // 切換布林值 (true -> false, false -> true)
+                    showFox = !showFox
                 }
         )
-
-        Spacer(modifier = Modifier.size(15.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // ... (底下三個按鈕的程式碼維持不變)
-            Button(
-                onClick = {
-                    try {
-                        mper?.release()
-                        mper = MediaPlayer.create(context, R.raw.tcyang)
-                        mper?.start()
-                        nowPlaying = "🎵 正在播放：tcyang"
-                    } catch (e: Exception) {
-                        nowPlaying = "❌ 播放失敗：tcyang"
-                    }
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Green)
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "歡迎", color = Color.Blue)
-                    Text(text = "修課", color = Color.Red)
-                    Image(
-                        painter = painterResource(id = R.drawable.teacher),
-                        contentDescription = "teacher icon"
-                    )
-                }
-            }
-
-            Button(
-                onClick = {
-                    try {
-                        mper?.release()
-                        mper = MediaPlayer.create(context, R.raw.fly)
-                        mper?.start()
-                        nowPlaying = "🎵 正在播放：fly"
-                    } catch (e: Exception) {
-                        nowPlaying = "❌ 播放失敗：fly"
-                    }
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "展翅飛翔", color = Color.White)
-                    Image(
-                        painter = painterResource(id = R.drawable.fly),
-                        contentDescription = "fly icon"
-                    )
-                }
-            }
-
-            Button(
-                onClick = {
-                    (context as? Activity)?.finish()
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BFFF)),
-                shape = CutCornerShape(10),
-                border = BorderStroke(1.dp, Color.Blue),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp)
-            ) {
-                Text(text = "結束App")
-            }
-        }
+        // 為了讓它下面也有些空間
         Spacer(modifier = Modifier.size(20.dp))
     }
 }
